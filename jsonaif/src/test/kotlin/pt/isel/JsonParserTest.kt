@@ -39,4 +39,23 @@ class JsonParserTest {
         assertEquals("Candida Raimunda", ps[1].name)
         assertEquals("Kata Mandala", ps[2].name)
     }
+
+    @Test fun parsePrimitiveInt() {
+        val aux= 8::class
+        val json= "{age: 7}"
+        val ps= JsonParserReflect.parse(json, aux)
+        assertEquals(7, ps)
+    }
+    @Test fun parsePrimitiveFloat() {
+        val aux= 7.5::class // até 6 casas decimais equivale a float
+        val json= "{age: 7.5}"
+        val ps= JsonParserReflect.parse(json, aux)
+        assertEquals(7.5, ps)
+    }
+    @Test fun parsePrimitiveDouble() {
+        val aux= 7.1234567::class // 7 casas decimais equivale a double
+        val json= "{age: 7.1234567}"
+        val ps= JsonParserReflect.parse(json, aux)
+        assertEquals(7.1234567, ps)
+    }
 }
