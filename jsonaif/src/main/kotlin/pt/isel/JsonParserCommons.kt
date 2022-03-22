@@ -2,7 +2,7 @@ package pt.isel
 
 import kotlin.reflect.KClass
 
-val basicParser: Map<KClass<*>, (String) -> Any> = mapOf(
+val basicParser: Map<KClass<*>, (String) -> Any> = mapOf(  //convert a string to one of this types
             Byte::class to { it.toByte() },
             Short::class to { it.toShort() },
             Int::class to { it.toInt() },

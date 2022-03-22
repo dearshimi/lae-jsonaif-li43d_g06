@@ -37,6 +37,6 @@ abstract class AbstractJsonParser : JsonParser {
             tokens.trim()
         }
         tokens.pop(ARRAY_END) // Discard square bracket ] ARRAY_END
-        return list;
+        return list
     }
 }
