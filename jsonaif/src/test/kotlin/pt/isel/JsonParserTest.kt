@@ -31,7 +31,7 @@ class JsonParserTest {
         assertEquals(1999, p.birth?.year)
     }
 
-    @Test fun parseArray() {
+    @Test fun parseArrayP() {
         val json = "[{name: \"Ze Manel\"}, {name: \"Candida Raimunda\"}, {name: \"Kata Mandala\"}]";
         val ps = JsonParserReflect.parse(json, Person::class) as List<Person>
         assertEquals(3, ps.size)
@@ -40,22 +40,16 @@ class JsonParserTest {
         assertEquals("Kata Mandala", ps[2].name)
     }
 
-    @Test fun parsePrimitiveInt() {
-        val aux= 8::class
-        val json= "{age: 7}"
-        val ps= JsonParserReflect.parse(json, aux)
-        assertEquals(7, ps)
+    @Test fun parseArrayS() {
+        val json = "[{ name: \"Ze Manel\", nr: 6353}, { name: \"Ze Manil\", nr: 7353}, { name: \"Ze Manal\", nr: 8353}]";
+        val ps = JsonParserReflect.parse(json, Student::class) as List<Student>
+        assertEquals(3, ps.size)
+        assertEquals("Ze Manel", ps[0].name)
+        assertEquals("Ze Manil", ps[1].name)
+        assertEquals("Ze Manal", ps[2].name)
+        assertEquals(6353, ps[0].nr)
+        assertEquals(7353, ps[1].nr)
+        assertEquals(8353, ps[2].nr)
     }
-    @Test fun parsePrimitiveFloat() {
-        val aux= 7.5::class // até 6 casas decimais equivale a float
-        val json= "{age: 7.5}"
-        val ps= JsonParserReflect.parse(json, aux)
-        assertEquals(7.5, ps)
-    }
-    @Test fun parsePrimitiveDouble() {
-        val aux= 7.1234567::class // 7 casas decimais equivale a double
-        val json= "{age: 7.1234567}"
-        val ps= JsonParserReflect.parse(json, aux)
-        assertEquals(7.1234567, ps)
-    }
+
 }
