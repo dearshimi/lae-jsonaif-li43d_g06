@@ -3,6 +3,7 @@ package pt.isel
 import kotlin.reflect.*
 import kotlin.reflect.full.createInstance
 import kotlin.reflect.full.memberProperties
+import kotlin.reflect.full.primaryConstructor
 
 object JsonParserReflect  : AbstractJsonParser() {
 
@@ -28,8 +29,14 @@ object JsonParserReflect  : AbstractJsonParser() {
     }
 
 
+    private fun getPropsMapC(klass : KClass<*>) : Map<String,Setter>{
+        println(":: processing ${klass.simpleName} ::")
+        val paramList = klass.primaryConstructor?.parameters ?: throw Exception("unsoported type")
 
-    override fun parseObject(tokens: JsonTokens, klass: KClass<*>): Any {
+        return paramList.associateBy({it.name?:""},{ConstructorSetter(it.type.classifier as KClass<*>, it)})
+    }
+
+    fun parseObjectt(tokens: JsonTokens, klass: KClass<*>): Any {
         val obj = klass.createInstance()
         val propsMap = setters.computeIfAbsent(klass, ::getPropsMap)
 
@@ -38,10 +45,8 @@ object JsonParserReflect  : AbstractJsonParser() {
 
         while (tokens.current != OBJECT_END) {
             val propName = tokens.popWordFinishedWith(COLON).trim()
-
-            val propSetter = propsMap[propName] as PropSetter
-            val propKlass = propSetter.propKlass
-            propSetter.apply(obj, tokens)
+            val setter = propsMap[propName] as PropSetter
+            setter.apply(obj, tokens)
             if (tokens.current == COMMA)
                 tokens.pop(COMMA)
             else break
@@ -49,5 +54,28 @@ object JsonParserReflect  : AbstractJsonParser() {
         }
         tokens.pop(OBJECT_END)
         return obj
+    }
+
+
+
+    override fun parseObject(tokens: JsonTokens, klass: KClass<*>) : Any {
+        val constructor = klass.primaryConstructor
+        val map = mutableMapOf<KParameter,Any?>()
+        val propsMap = setters.computeIfAbsent(klass, ::getPropsMapC)
+        tokens.pop(OBJECT_OPEN)
+        tokens.trim()
+        while (tokens.current != OBJECT_END) {
+            val paramName = tokens.popWordFinishedWith(COLON).trim()
+            val setter = propsMap[paramName] as ConstructorSetter
+            setter.apply(map,tokens)
+
+            if (tokens.current == COMMA)
+                tokens.pop(COMMA)
+            else break
+            tokens.trim()
+        }
+        tokens.pop(OBJECT_END)
+
+        return constructor!!.callBy(map)
     }
 }
