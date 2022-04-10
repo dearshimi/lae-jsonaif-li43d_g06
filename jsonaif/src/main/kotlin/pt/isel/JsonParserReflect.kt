@@ -50,7 +50,7 @@ object JsonParserReflect  : AbstractJsonParser() {
     }
 
 
-   fun parseObjectP(tokens: JsonTokens, klass: KClass<*>): Any {
+   private fun parseObjectP(tokens: JsonTokens, klass: KClass<*>): Any {
         val obj = klass.createInstance()
         val propsMap = setters.computeIfAbsent(klass, ::getPropsMap)
 
@@ -71,8 +71,8 @@ object JsonParserReflect  : AbstractJsonParser() {
     }
 
 
+    private fun parseObjectC(tokens: JsonTokens, klass: KClass<*>) : Any {
 
-     fun parseObjectC (tokens: JsonTokens, klass: KClass<*>) : Any {
         val constructor = klass.primaryConstructor
         val map = mutableMapOf<KParameter,Any?>()
         val propsMap = setters.computeIfAbsent(klass, ::getPropsMapC)

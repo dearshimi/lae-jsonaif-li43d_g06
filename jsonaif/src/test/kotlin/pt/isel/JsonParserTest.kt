@@ -17,11 +17,34 @@ class JsonParserTest {
         assertEquals(1999, student.birth?.year)
     }
 
+    @Test fun parseSimpleObjectViaPropertiesJsonConvert() {
+        val json = "{ name: \"Ze Manel\", nr: 7353, birth: \"1998-11-17\" }"
+        val student = JsonParserReflect.parse(json, Student::class) as Student
+        assertEquals("Ze Manel", student.name)
+        assertEquals(7353, student.nr)
+        assertEquals(17, student.birth?.day)
+        assertEquals(11, student.birth?.month)
+        assertEquals(1998, student.birth?.year)
+    }
+
     @Test fun parseSimpleObjectViaConstructor() {
-        val json = "{ id: 94646, nome: \"Ze Manel\"}"
+        val json = "{ id: 94646, name: \"Ze Manel\", birth: { year: 1999, month: 9, day: 19}}"
         val p = JsonParserReflect.parse(json, Person::class) as Person
         assertEquals(94646, p.id)
         assertEquals("Ze Manel", p.name)
+        assertEquals(19, p.birth?.day)
+        assertEquals(9, p.birth?.month)
+        assertEquals(1999, p.birth?.year)
+    }
+
+    @Test fun parseSimpleObjectViaConstructorJsonConvert() {
+        val json = "{ id: 94646, name: \"Ze Manel\", birth: \"1998-11-17\"}"
+        val p = JsonParserReflect.parse(json, Person::class) as Person
+        assertEquals(94646, p.id)
+        assertEquals("Ze Manel", p.name)
+        assertEquals(17, p.birth?.day)
+        assertEquals(11, p.birth?.month)
+        assertEquals(1998, p.birth?.year)
     }
 
     @Test fun parseComposeObject() {
@@ -36,7 +59,7 @@ class JsonParserTest {
     }
 
     @Test fun parseArrayP() {
-        val json = "[{name: \"Ze Manel\"}, {name: \"Candida Raimunda\"}, {name: \"Kata Mandala\"}]";
+        val json = "[{ id: 94646, name: \"Ze Manel\"}, { id: 96325, name: \"Candida Raimunda\"}, { id: 42157, name: \"Kata Mandala\"}]";
         val ps = JsonParserReflect.parse(json, Person::class) as List<Person>
         assertEquals(3, ps.size)
         assertEquals("Ze Manel", ps[0].name)
