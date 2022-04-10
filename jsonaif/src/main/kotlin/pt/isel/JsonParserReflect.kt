@@ -37,8 +37,8 @@ object JsonParserReflect  : AbstractJsonParser() {
         val map = mutableMapOf<String, Setter>()
         paramList.forEach{param ->
         val findAn = klass.memberProperties.find{it.name==param.name}?.findAnnotation<JsonProperty>()
-        if(findAn != null) map[findAn.aka] = ConstructorSetter(param.type.classifier as KClass<*>, param)
-        map[param.name!!] = ConstructorSetter(param.type.classifier as KClass<*>, param)
+        if(findAn != null) map[findAn.aka] = ConstructorSetter(klass,param.type.classifier as KClass<*>,param )
+        map[param.name!!] = ConstructorSetter(klass,param.type.classifier as KClass<*>, param)
         }
         return map
     }

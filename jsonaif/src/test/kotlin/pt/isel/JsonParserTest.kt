@@ -1,6 +1,7 @@
 package pt.isel
 
-import pt.isel.sample.Person
+
+import Person
 import pt.isel.sample.Student
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -8,17 +9,17 @@ import kotlin.test.assertEquals
 class JsonParserTest {
 
     @Test fun parseSimpleObjectViaProperties() {
-        val json = "{ nome: \"Ze Manel\", nr: 7353, birth:{ year: 1999, month: 9, day: 19}}"
+        val json = "{ nome: \"Ze Manel\", nr: 7353, birth: \"1998-11-17\"}"
         val student = JsonParserReflect.parse(json, Student::class) as Student
         assertEquals("Ze Manel", student.name)
         assertEquals(7353, student.nr)
-        assertEquals(19, student.birth?.day)
-        assertEquals(9, student.birth?.month)
-        assertEquals(1999, student.birth?.year)
+        assertEquals(17, student.birth?.day)
+        assertEquals(11, student.birth?.month)
+        assertEquals(1998, student.birth?.year)
     }
 
     @Test fun parseSimpleObjectViaPropertiesJsonConvert() {
-        val json = "{ name: \"Ze Manel\", nr: 7353, birth: \"1998-11-17\" }"
+        val json = "{ name: \"Ze Manel\", nr: 7353, birth: \"1998-11-17\"}"
         val student = JsonParserReflect.parse(json, Student::class) as Student
         assertEquals("Ze Manel", student.name)
         assertEquals(7353, student.nr)
@@ -28,7 +29,7 @@ class JsonParserTest {
     }
 
     @Test fun parseSimpleObjectViaConstructor() {
-        val json = "{ id: 94646, name: \"Ze Manel\", birth: { year: 1999, month: 9, day: 19}}"
+        val json = "{ id: 94646, nome: \"Ze Manel\", birth: { year: 1999, month: 9, day: 19}}"
         val p = JsonParserReflect.parse(json, Person::class) as Person
         assertEquals(94646, p.id)
         assertEquals("Ze Manel", p.name)
