@@ -8,27 +8,31 @@ import kotlin.test.assertEquals
 class JsonParserTest {
 
     @Test fun parseSimpleObjectViaProperties() {
-        val json = "{ name: \"Ze Manel\", nr: 7353}"
+        val json = "{ nome: \"Ze Manel\", nr: 7353, birth:{ year: 1999, month: 9, day: 19}}"
         val student = JsonParserReflect.parse(json, Student::class) as Student
         assertEquals("Ze Manel", student.name)
         assertEquals(7353, student.nr)
+        assertEquals(19, student.birth?.day)
+        assertEquals(9, student.birth?.month)
+        assertEquals(1999, student.birth?.year)
     }
 
     @Test fun parseSimpleObjectViaConstructor() {
-        val json = "{ id: 94646, name: \"Ze Manel\"}"
+        val json = "{ id: 94646, nome: \"Ze Manel\"}"
         val p = JsonParserReflect.parse(json, Person::class) as Person
         assertEquals(94646, p.id)
         assertEquals("Ze Manel", p.name)
     }
 
     @Test fun parseComposeObject() {
-        val json = "{ id: 94646, name: \"Ze Manel\", birth: { year: 1999, month: 9, day: 19}, sibling: { name: \"Kata Badala\"}}"
+        val json = "{ id: 94646, name: \"Ze Manel\", birth: { year: 1999, month: 9, day: 19}, sibling: { id: 94645, name: \"Kata Badala\"}}"
         val p = JsonParserReflect.parse(json, Person::class) as Person
         assertEquals(94646, p.id)
         assertEquals("Ze Manel", p.name)
         assertEquals(19, p.birth?.day)
         assertEquals(9, p.birth?.month)
         assertEquals(1999, p.birth?.year)
+        assertEquals(94645,p.sibling?.id)
     }
 
     @Test fun parseArrayP() {
