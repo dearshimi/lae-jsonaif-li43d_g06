@@ -1,9 +1,7 @@
 package pt.isel
 
 import kotlin.reflect.*
-import kotlin.reflect.full.createInstance
-import kotlin.reflect.full.memberProperties
-import kotlin.reflect.full.primaryConstructor
+import kotlin.reflect.full.*
 
 object JsonParserReflect  : AbstractJsonParser() {
 
@@ -19,24 +17,40 @@ object JsonParserReflect  : AbstractJsonParser() {
         return resp?.let { it(prim) }
     }
 
-
-    private fun getPropsMap(klass : KClass<*>) : Map<String,Setter>{
+    private fun getPropsMap(klass : KClass<*>) : Map<String,Setter>{ // student
         println(":: processing ${klass.simpleName} ::")
         val propList = klass.memberProperties.filter{
                 prop -> prop.visibility == KVisibility.PUBLIC
         }
-        return propList.associateBy({it.name},{PropSetter(it.returnType.classifier as KClass<*>, it)})
+        val map = mutableMapOf<String, Setter>()
+        propList.forEach{prop ->
+            val findAn = prop.findAnnotation<JsonProperty>()
+            if(findAn != null) map[findAn.aka] = PropSetter(prop.returnType.classifier as KClass<*>,prop as KMutableProperty1<Any, Any?>)
+            map[prop.name] = PropSetter(prop.returnType.classifier as KClass<*>, prop as KMutableProperty1<Any, Any?>)
+        }
+        return map
     }
-
 
     private fun getPropsMapC(klass : KClass<*>) : Map<String,Setter>{
         println(":: processing ${klass.simpleName} ::")
         val paramList = klass.primaryConstructor?.parameters ?: throw Exception("unsoported type")
-
-        return paramList.associateBy({it.name?:""},{ConstructorSetter(it.type.classifier as KClass<*>, it)})
+        val map = mutableMapOf<String, Setter>()
+        paramList.forEach{param ->
+        val findAn = klass.memberProperties.find{it.name==param.name}?.findAnnotation<JsonProperty>()
+        if(findAn != null) map[findAn.aka] = ConstructorSetter(param.type.classifier as KClass<*>, param)
+        map[param.name!!] = ConstructorSetter(param.type.classifier as KClass<*>, param)
+        }
+        return map
     }
 
-    fun parseObjectt(tokens: JsonTokens, klass: KClass<*>): Any {
+    override fun parseObject(tokens: JsonTokens, klass: KClass<*>) : Any {
+        val params = klass.primaryConstructor?.parameters
+        return if(params?.filter{ it.isOptional }?.size == params?.size ) parseObjectP(tokens, klass)
+        else parseObjectC(tokens, klass)
+    }
+
+
+   fun parseObjectP(tokens: JsonTokens, klass: KClass<*>): Any {
         val obj = klass.createInstance()
         val propsMap = setters.computeIfAbsent(klass, ::getPropsMap)
 
@@ -58,7 +72,7 @@ object JsonParserReflect  : AbstractJsonParser() {
 
 
 
-    override fun parseObject(tokens: JsonTokens, klass: KClass<*>) : Any {
+     fun parseObjectC (tokens: JsonTokens, klass: KClass<*>) : Any {
         val constructor = klass.primaryConstructor
         val map = mutableMapOf<KParameter,Any?>()
         val propsMap = setters.computeIfAbsent(klass, ::getPropsMapC)
