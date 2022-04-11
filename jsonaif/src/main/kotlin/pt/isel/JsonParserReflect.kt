@@ -36,7 +36,7 @@ object JsonParserReflect  : AbstractJsonParser() {
         val paramList = klass.primaryConstructor?.parameters ?: throw Exception("unsoported type")
         val map = mutableMapOf<String, Setter>()
         paramList.forEach{param ->
-        val findAn = klass.memberProperties.find{it.name==param.name}?.findAnnotation<JsonProperty>()
+        val findAn = param.findAnnotation<JsonProperty>() //klass.memberProperties.find{it.name==param.name}
         if(findAn != null) map[findAn.aka] = ConstructorSetter(klass,param.type.classifier as KClass<*>,param )
         map[param.name!!] = ConstructorSetter(klass,param.type.classifier as KClass<*>, param)
         }
