@@ -24,9 +24,18 @@ object JsonParserReflect  : AbstractJsonParser() {
         }
         val map = mutableMapOf<String, Setter>()
         propList.forEach{prop ->
-            val findAn = prop.findAnnotation<JsonProperty>()
-            if(findAn != null) map[findAn.aka] = PropSetter(prop.returnType.classifier as KClass<*>,prop as KMutableProperty1<Any, Any?>)
-            map[prop.name] = PropSetter(prop.returnType.classifier as KClass<*>, prop as KMutableProperty1<Any, Any?>)
+            val annC = prop.findAnnotation<JsonConvert>()
+            val annP = prop.findAnnotation<JsonProperty>()
+            var function: KFunction<*>? = null
+            var instance: Any? = null
+
+            if(annC != null) {
+                function = annC.klass.companionObject?.functions?.first()
+                instance = annC.klass.companionObjectInstance
+            }
+
+            if(annP != null) map[annP.aka] = PropSetter(prop.returnType.classifier as KClass<*>,prop as KMutableProperty1<Any, Any?>, function, instance)
+            map[prop.name] = PropSetter(prop.returnType.classifier as KClass<*>, prop as KMutableProperty1<Any, Any?>, function, instance)
         }
         return map
     }
@@ -36,9 +45,18 @@ object JsonParserReflect  : AbstractJsonParser() {
         val paramList = klass.primaryConstructor?.parameters ?: throw Exception("unsoported type")
         val map = mutableMapOf<String, Setter>()
         paramList.forEach{param ->
-        val findAn = param.findAnnotation<JsonProperty>() //klass.memberProperties.find{it.name==param.name}
-        if(findAn != null) map[findAn.aka] = ConstructorSetter(klass,param.type.classifier as KClass<*>,param )
-        map[param.name!!] = ConstructorSetter(klass,param.type.classifier as KClass<*>, param)
+            val annC = param.findAnnotation<JsonConvert>()
+            val annP = param.findAnnotation<JsonProperty>()
+            var function: KFunction<*>? = null
+            var instance: Any? = null
+
+            if(annC != null) {
+                function = annC.klass.companionObject?.functions?.first()
+                instance = annC.klass.companionObjectInstance
+            }
+
+            if(annP != null) map[annP.aka] = ConstructorSetter(param.type.classifier as KClass<*>, param, function, instance)
+            map[param.name!!] = ConstructorSetter(param.type.classifier as KClass<*>, param, function, instance)
         }
         return map
     }
