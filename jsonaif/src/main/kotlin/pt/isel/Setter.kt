@@ -4,7 +4,6 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KParameter
-import kotlin.reflect.full.*
 
 interface Setter {
     fun apply(target: Any, tokens: JsonTokens)
@@ -30,5 +29,16 @@ class ConstructorSetter(val paramKlass: KClass<*>, val param: KParameter, val fu
         val v = JsonParserReflect.parse(convertedTokens, paramKlass)
         val map = target as MutableMap<KParameter,Any?>
         map[param] = v
+    }
+}
+
+
+class TestSetter(val jsonType: KClass<*>, val prop: KMutableProperty1<Any, Any?>, val function: KFunction<*>?, val instance: Any?) : Setter {
+    override fun apply(target: Any, tokens: JsonTokens) {
+
+        val v = JsonParserReflect.parse(tokens, jsonType)
+        val cv = function?.call(instance, v)
+
+        prop.set(target,cv)
     }
 }

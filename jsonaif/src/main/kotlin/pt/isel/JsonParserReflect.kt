@@ -11,7 +11,7 @@ object JsonParserReflect  : AbstractJsonParser() {
      */
     private val setters = mutableMapOf<KClass<*>, Map<String, Setter>>()
 
-    override fun parsePrimitive(tokens: JsonTokens, klass: KClass<*>): Any? {
+    override fun parsePrimitive(tokens: JsonTokens, klass: KClass<*>): Any? { // throw exception verify string "null"
         val prim = tokens.popWordPrimitive()
         val resp = basicParser[klass]
         return resp?.let { it(prim) }
@@ -20,29 +20,30 @@ object JsonParserReflect  : AbstractJsonParser() {
     private fun getPropsMap(klass : KClass<*>) : Map<String,Setter>{ // student
         println(":: processing ${klass.simpleName} ::")
         val propList = klass.memberProperties.filter{
-                prop -> prop.visibility == KVisibility.PUBLIC
+                prop -> prop.visibility == KVisibility.PUBLIC //&& prop
         }
         val map = mutableMapOf<String, Setter>()
         propList.forEach{prop ->
             val annC = prop.findAnnotation<JsonConvert>()
             val annP = prop.findAnnotation<JsonProperty>()
-            var function: KFunction<*>? = null
-            var instance: Any? = null
+            var converterFunction: KFunction<*>? = null
+            var converterInstance: Any? = null
 
             if(annC != null) {
-                function = annC.klass.companionObject?.functions?.first()
-                instance = annC.klass.companionObjectInstance
+                converterFunction = annC.klass.companionObject?.functions?.single{ it.name == "convert" }
+                converterInstance = annC.klass.companionObjectInstance
             }
 
-            if(annP != null) map[annP.aka] = PropSetter(prop.returnType.classifier as KClass<*>,prop as KMutableProperty1<Any, Any?>, function, instance)
-            map[prop.name] = PropSetter(prop.returnType.classifier as KClass<*>, prop as KMutableProperty1<Any, Any?>, function, instance)
+            val setter = PropSetter(prop.returnType.classifier as KClass<*>,prop as KMutableProperty1<Any, Any?>, converterFunction, converterInstance)
+            if(annP != null) map[annP.aka] = setter
+            map[prop.name] = setter
         }
         return map
     }
 
-    private fun getPropsMapC(klass : KClass<*>) : Map<String,Setter>{
+    private fun getParamsMapC(klass : KClass<*>) : Map<String,Setter>{
         println(":: processing ${klass.simpleName} ::")
-        val paramList = klass.primaryConstructor?.parameters ?: throw Exception("unsoported type")
+        val paramList = klass.primaryConstructor?.parameters ?: throw Exception("unsupported type")
         val map = mutableMapOf<String, Setter>()
         paramList.forEach{param ->
             val annC = param.findAnnotation<JsonConvert>()
@@ -51,12 +52,13 @@ object JsonParserReflect  : AbstractJsonParser() {
             var instance: Any? = null
 
             if(annC != null) {
-                function = annC.klass.companionObject?.functions?.first()
+                function = annC.klass.companionObject?.functions?.single{ it.name == "convert" }
                 instance = annC.klass.companionObjectInstance
             }
 
-            if(annP != null) map[annP.aka] = ConstructorSetter(param.type.classifier as KClass<*>, param, function, instance)
-            map[param.name!!] = ConstructorSetter(param.type.classifier as KClass<*>, param, function, instance)
+            val setter = ConstructorSetter(param.type.classifier as KClass<*>, param, function, instance)
+            if(annP != null) map[annP.aka] = setter
+            map[param.name ?: throw Exception("parameter name is null")] = setter
         }
         return map
     }
@@ -91,14 +93,14 @@ object JsonParserReflect  : AbstractJsonParser() {
 
     private fun parseObjectC(tokens: JsonTokens, klass: KClass<*>) : Any {
 
-        val constructor = klass.primaryConstructor
+        val constructor = klass.primaryConstructor ?: throw Exception("unsupported type")
         val map = mutableMapOf<KParameter,Any?>()
-        val propsMap = setters.computeIfAbsent(klass, ::getPropsMapC)
+        val paramsMap = setters.computeIfAbsent(klass, ::getParamsMapC)
         tokens.pop(OBJECT_OPEN)
         tokens.trim()
         while (tokens.current != OBJECT_END) {
             val paramName = tokens.popWordFinishedWith(COLON).trim()
-            val setter = propsMap[paramName] as ConstructorSetter
+            val setter = paramsMap[paramName] as ConstructorSetter
             setter.apply(map,tokens)
 
             if (tokens.current == COMMA)
@@ -108,6 +110,6 @@ object JsonParserReflect  : AbstractJsonParser() {
         }
         tokens.pop(OBJECT_END)
 
-        return constructor!!.callBy(map)
+        return constructor.callBy(map)
     }
 }

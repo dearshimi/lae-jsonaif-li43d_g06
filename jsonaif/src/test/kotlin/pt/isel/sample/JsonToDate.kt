@@ -1,10 +1,12 @@
-package pt.isel
+package pt.isel.sample
+
+import pt.isel.JsonTokens
 
 class JsonToDate {
 
     companion object {
 
-        fun Convert(date: JsonTokens): JsonTokens {
+        fun convert(date: JsonTokens): JsonTokens {
             date.popWordFinishedWith('"')
             val year = date.popWordFinishedWith('-')
             val month = date.popWordFinishedWith('-')
