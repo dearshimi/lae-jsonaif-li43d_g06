@@ -5,13 +5,9 @@ import pt.isel.JsonTokens
 class JsonToDate {
 
     companion object {
-
-        fun convert(date: JsonTokens): JsonTokens {
-            date.popWordFinishedWith('"')
-            val year = date.popWordFinishedWith('-')
-            val month = date.popWordFinishedWith('-')
-            val day = date.popWordFinishedWith('"')
-            return JsonTokens("{ year: $year, month: $month, day: $day}")
+        fun convert(date: String): Date {  // date = 1998-11-17
+            val split = date.split("-")
+            return Date(split[2].toInt(), split[1].toInt(), split[0].toInt())
         }
     }
 }

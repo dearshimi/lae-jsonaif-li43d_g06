@@ -9,7 +9,7 @@ import kotlin.test.assertEquals
 class JsonParserTest {
 
     @Test fun parseSimpleObjectViaProperties() {
-        val json = "{ nome: \"Ze Manel\", nr: 7353, birth: \"1998-11-17\"}"
+        val json = "{ nome: \"Ze Manel\", nr: 7353, birth: { year: 1998, month: 11, day: 17}}"
         val student = JsonParserReflect.parse(json, Student::class) as Student
         assertEquals("Ze Manel", student.name)
         assertEquals(7353, student.nr)

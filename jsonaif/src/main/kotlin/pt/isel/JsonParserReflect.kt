@@ -28,13 +28,15 @@ object JsonParserReflect  : AbstractJsonParser() {
             val annP = prop.findAnnotation<JsonProperty>()
             var converterFunction: KFunction<*>? = null
             var converterInstance: Any? = null
+            var jsonType: KClass<*>? = null
 
             if(annC != null) {
                 converterFunction = annC.klass.companionObject?.functions?.single{ it.name == "convert" }
                 converterInstance = annC.klass.companionObjectInstance
+                jsonType = converterFunction?.parameters?.single{it.name == "date"}?.type?.classifier as KClass<*>
             }
 
-            val setter = PropSetter(prop.returnType.classifier as KClass<*>,prop as KMutableProperty1<Any, Any?>, converterFunction, converterInstance)
+            val setter = PropSetter(prop.returnType.classifier as KClass<*>,prop as KMutableProperty1<Any, Any?>, converterFunction, converterInstance, jsonType)
             if(annP != null) map[annP.aka] = setter
             map[prop.name] = setter
         }
@@ -48,15 +50,17 @@ object JsonParserReflect  : AbstractJsonParser() {
         paramList.forEach{param ->
             val annC = param.findAnnotation<JsonConvert>()
             val annP = param.findAnnotation<JsonProperty>()
-            var function: KFunction<*>? = null
-            var instance: Any? = null
+            var converterFunction: KFunction<*>? = null
+            var converterInstance: Any? = null
+            var jsonType: KClass<*>? = null
 
             if(annC != null) {
-                function = annC.klass.companionObject?.functions?.single{ it.name == "convert" }
-                instance = annC.klass.companionObjectInstance
+                converterFunction = annC.klass.companionObject?.functions?.single{ it.name == "convert" }
+                converterInstance = annC.klass.companionObjectInstance
+                jsonType = converterFunction?.parameters?.single{it.name == "date"}?.type?.classifier as KClass<*>
             }
 
-            val setter = ConstructorSetter(param.type.classifier as KClass<*>, param, function, instance)
+            val setter = ConstructorSetter(param.type.classifier as KClass<*>, param, converterFunction, converterInstance, jsonType)
             if(annP != null) map[annP.aka] = setter
             map[param.name ?: throw Exception("parameter name is null")] = setter
         }
