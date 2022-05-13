@@ -17,27 +17,27 @@ object JsonParserReflect  : AbstractJsonParser() {
         return resp?.let { it(prim) }
     }
 
-    private fun getPropsMap(klass : KClass<*>) : Map<String,Setter>{ // student
+    private fun getPropsMap(klass : KClass<*>) : Map<String,Setter>{
         println(":: processing ${klass.simpleName} ::")
         val propList = klass.memberProperties.filter{
                 prop -> prop.visibility == KVisibility.PUBLIC //&& prop
         }
         val map = mutableMapOf<String, Setter>()
         propList.forEach{prop ->
-            val annC = prop.findAnnotation<JsonConvert>()
-            val annP = prop.findAnnotation<JsonProperty>()
+            val convertAnnotation = prop.findAnnotation<JsonConvert>()
+            val propertyAnnotation = prop.findAnnotation<JsonProperty>()
             var converterFunction: KFunction<*>? = null
             var converterInstance: Any? = null
             var jsonType: KClass<*>? = null
 
-            if(annC != null) {
-                converterFunction = annC.klass.companionObject?.functions?.single{ it.name == "convert" }
-                converterInstance = annC.klass.companionObjectInstance
+            if(convertAnnotation != null) {
+                converterFunction = convertAnnotation.klass.companionObject?.functions?.single{ it.name == "convert" }
+                converterInstance = convertAnnotation.klass.companionObjectInstance
                 jsonType = converterFunction?.parameters?.single{it.name == "date"}?.type?.classifier as KClass<*>
             }
 
             val setter = PropSetter(prop.returnType.classifier as KClass<*>,prop as KMutableProperty1<Any, Any?>, converterFunction, converterInstance, jsonType)
-            if(annP != null) map[annP.aka] = setter
+            if(propertyAnnotation != null) map[propertyAnnotation.aka] = setter
             map[prop.name] = setter
         }
         return map
@@ -48,20 +48,20 @@ object JsonParserReflect  : AbstractJsonParser() {
         val paramList = klass.primaryConstructor?.parameters ?: throw Exception("unsupported type")
         val map = mutableMapOf<String, Setter>()
         paramList.forEach{param ->
-            val annC = param.findAnnotation<JsonConvert>()
-            val annP = param.findAnnotation<JsonProperty>()
+            val convertAnnotation = param.findAnnotation<JsonConvert>()
+            val propertyAnnotation = param.findAnnotation<JsonProperty>()
             var converterFunction: KFunction<*>? = null
             var converterInstance: Any? = null
             var jsonType: KClass<*>? = null
 
-            if(annC != null) {
-                converterFunction = annC.klass.companionObject?.functions?.single{ it.name == "convert" }
-                converterInstance = annC.klass.companionObjectInstance
+            if(convertAnnotation != null) {
+                converterFunction = convertAnnotation.klass.companionObject?.functions?.single{ it.name == "convert" }
+                converterInstance = convertAnnotation.klass.companionObjectInstance
                 jsonType = converterFunction?.parameters?.single{it.name == "date"}?.type?.classifier as KClass<*>
             }
 
             val setter = ConstructorSetter(param.type.classifier as KClass<*>, param, converterFunction, converterInstance, jsonType)
-            if(annP != null) map[annP.aka] = setter
+            if(propertyAnnotation != null) map[propertyAnnotation.aka] = setter
             map[param.name ?: throw Exception("parameter name is null")] = setter
         }
         return map
@@ -69,12 +69,12 @@ object JsonParserReflect  : AbstractJsonParser() {
 
     override fun parseObject(tokens: JsonTokens, klass: KClass<*>) : Any {
         val params = klass.primaryConstructor?.parameters
-        return if(params?.filter{ it.isOptional }?.size == params?.size ) parseObjectP(tokens, klass)
-        else parseObjectC(tokens, klass)
+        return if(params?.filter{ it.isOptional }?.size == params?.size ) parseObjectViaProperties(tokens, klass)
+        else parseObjectViaConstructor(tokens, klass)
     }
 
 
-   private fun parseObjectP(tokens: JsonTokens, klass: KClass<*>): Any {
+   private fun parseObjectViaProperties(tokens: JsonTokens, klass: KClass<*>): Any {
         val obj = klass.createInstance()
         val propsMap = setters.computeIfAbsent(klass, ::getPropsMap)
 
@@ -95,7 +95,7 @@ object JsonParserReflect  : AbstractJsonParser() {
     }
 
 
-    private fun parseObjectC(tokens: JsonTokens, klass: KClass<*>) : Any {
+    private fun parseObjectViaConstructor(tokens: JsonTokens, klass: KClass<*>) : Any {
 
         val constructor = klass.primaryConstructor ?: throw Exception("unsupported type")
         val map = mutableMapOf<KParameter,Any?>()
